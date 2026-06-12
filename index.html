@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Archangel — Summer 2026 Manager Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+:root{
+  --tech:#1502FF;
+  --edu:#7776BC;
+  --biz:#EF4B19;
+  --found:#00A86B;
+  --bg:#0A0A0F;
+  --surface:#0D0D14;
+  --card:#111118;
+  --border:#1E1E2E;
+  --text:#FFFFFF;
+  --text2:#AAAACC;
+  --text3:#555577;
+  --row:#13131A;
+}
+.light{
+  --bg:#F4F4F8;
+  --surface:#FFFFFF;
+  --card:#F8F8FC;
+  --border:#E0E0EE;
+  --text:#0A0A1A;
+  --text2:#4A4A6A;
+  --text3:#9090AA;
+  --row:#F0F0F6;
+}
+*{box-sizing:border-box;margin:0;padding:0;transition:background 0.25s,color 0.25s,border-color 0.25s}
+body{background:var(--bg);color:var(--text);font-family:Arial,sans-serif;min-height:100vh}
+.hdr{background:var(--surface);padding:16px 28px;border-bottom:3px solid var(--tech);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.hdr-left{display:flex;align-items:center;gap:14px}
+.logo{width:38px;height:38px;border-radius:8px;background:var(--tech);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:#fff;flex-shrink:0}
+.hdr-eyebrow{font-size:10px;color:var(--edu);letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+.hdr-title{font-size:18px;font-weight:700;color:var(--text)}
+.hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.btn{padding:7px 14px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;letter-spacing:0.3px;text-transform:uppercase;border:none;transition:opacity 0.2s}
+.btn:hover{opacity:0.82}
+.btn-blue{background:var(--tech);color:#fff}
+.btn-ghost{background:transparent;color:var(--edu);border:1px solid var(--edu)40}
+.btn-mode{background:var(--card);color:var(--text2);border:1px solid var(--border);font-size:13px;padding:7px 12px}
+.badge{background:#EF4B1920;color:var(--biz);font-size:9px;font-weight:700;padding:4px 10px;border-radius:4px;letter-spacing:1px;text-transform:uppercase;border:1px solid #EF4B1940}
+.stripe{background:var(--tech);padding:7px 28px;font-size:9px;font-weight:600;color:#fff;letter-spacing:1.2px;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center}
+
+/* TABS */
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:0}
+.tab{padding:12px 20px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;color:var(--text3);border-bottom:3px solid transparent;margin-bottom:-1px;transition:color 0.2s,border-color 0.2s}
+.tab:hover{color:var(--text2)}
+.tab.active{color:var(--tech);border-bottom-color:var(--tech)}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+.content{padding:22px 28px}
+.status{border-radius:8px;padding:9px 14px;margin-bottom:18px;display:flex;align-items:center;gap:8px;font-size:11px}
+.status-live{background:#00A86B12;border:1px solid #00A86B30;color:var(--found)}
+.status-err{background:#EF4B1912;border:1px solid #EF4B1930;color:var(--biz)}
+.status-load{background:var(--card);border:1px solid var(--border);color:var(--text3)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--found);flex-shrink:0}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.sdot-live{animation:pulse 2s infinite}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:700px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.kpi-lbl{font-size:9px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:7px}
+.kpi-val{font-size:26px;font-weight:700;line-height:1;color:var(--text)}
+.kpi-sub{font-size:10px;margin-top:5px;font-weight:600}
+.kpi-track{background:var(--border);height:3px;border-radius:2px;margin-top:10px}
+.kpi-bar{height:3px;border-radius:2px;transition:width 1.2s ease}
+.kpi-i::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--tech)}
+.kpi-b::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--edu)}
+.kpi-c::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--found)}
+
+/* CHARTS */
+.row2{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px}
+.row3{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:800px){.row2,.row3{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.card-title{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px}
+.legend{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
+.leg-sq{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+
+/* SUMMARY TABLE */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:7px 10px;border-bottom:1px solid var(--border);text-align:left;font-weight:600}
+.tbl td{padding:9px 10px;border-bottom:1px solid var(--row);color:var(--text2)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:var(--row)}
+.pill-active{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;text-transform:uppercase;background:#00A86B15;color:var(--found);border:1px solid #00A86B30}
+
+/* PROGRESS */
+.pbar-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px}
+.pbar-track{background:var(--border);height:6px;border-radius:3px;margin-bottom:10px}
+.pbar-fill{height:6px;border-radius:3px;transition:width 1.2s ease}
+
+/* TASK REVIEW */
+.task-filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.task-filters select,.task-filters input{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:11px;min-width:140px}
+.task-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.task-tbl th{color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;font-weight:600;background:var(--surface);position:sticky;top:0}
+.task-tbl td{padding:10px 12px;border-bottom:1px solid var(--row);color:var(--text2);vertical-align:top}
+.task-tbl tr:hover td{background:var(--row)}
+.task-tbl tr:last-child td{border-bottom:none}
+.intern-badge-i{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;background:#1502FF20;color:var(--tech);border:1px solid #1502FF30}
+.intern-badge-b{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;background:#7776BC20;color:var(--edu);border:1px solid #7776BC30}
+.task-wrap{max-height:520px;overflow-y:auto;border-radius:10px;border:1px solid var(--border)}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3);font-size:13px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-left">
+    <div class="logo">A</div>
+    <div>
+      <div class="hdr-eyebrow">Archangel Education + Technology</div>
+      <div class="hdr-title">Summer 2026 — Manager Dashboard</div>
+    </div>
+  </div>
+  <div class="hdr-right">
+    <button class="btn btn-mode" id="modeBtn" onclick="toggleMode()">☀️ Light</button>
+    <button class="btn btn-ghost" onclick="exportCSV()">↓ Export CSV</button>
+    <button class="btn btn-blue" onclick="window.print()">↓ Export PDF</button>
+    <span class="badge">Confidential</span>
+  </div>
+</div>
+
+<div class="stripe">
+  <span>MDC Internship Program · Summer 2026 · 12-Week Program · Target: 480 hrs / intern</span>
+  <span style="font-weight:400;opacity:0.8;font-size:10px" id="sTime"></span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview')">Overview</div>
+  <div class="tab" onclick="switchTab('tasks')">Task Review</div>
+</div>
+
+<!-- OVERVIEW TAB -->
+<div class="tab-pane active" id="pane-overview">
+  <div class="content">
+    <div class="status status-load" id="statusBar">
+      <div class="sdot" id="sDot"></div>
+      <span id="sTxt">Connecting to Google Sheets...</span>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi kpi-i">
+        <div class="kpi-lbl">Ibrahim — Total Hours</div>
+        <div class="kpi-val" id="k1">—</div>
+        <div class="kpi-sub" style="color:var(--tech)" id="k1s">—</div>
+        <div class="kpi-track"><div class="kpi-bar" id="k1b" style="background:var(--tech);width:0%"></div></div>
+      </div>
+      <div class="kpi kpi-b">
+        <div class="kpi-lbl">Bryan — Total Hours</div>
+        <div class="kpi-val" id="k2">—</div>
+        <div class="kpi-sub" style="color:var(--edu)" id="k2s">—</div>
+        <div class="kpi-track"><div class="kpi-bar" id="k2b" style="background:var(--edu);width:0%"></div></div>
+      </div>
+      <div class="kpi kpi-c">
+        <div class="kpi-lbl">Combined Hours</div>
+        <div class="kpi-val" id="k3">—</div>
+        <div class="kpi-sub" style="color:var(--found)" id="k3s">—</div>
+        <div class="kpi-track"><div class="kpi-bar" id="k3b" style="background:var(--found);width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="card">
+        <div class="card-title">Weekly Hours — Ibrahim vs Bryan</div>
+        <div class="legend">
+          <div class="leg"><div class="leg-sq" style="background:var(--tech)"></div>Ibrahim Chhapra</div>
+          <div class="leg"><div class="leg-sq" style="background:var(--edu)"></div>Bryan Londres</div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="barChart" role="img" aria-label="Weekly hours for both interns">Weekly hours.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Total Hours Split</div>
+        <div style="position:relative;height:160px"><canvas id="pieChart" role="img" aria-label="Hours split donut">Hours split.</canvas></div>
+        <div class="legend" style="justify-content:center;margin-top:10px;margin-bottom:0">
+          <div class="leg"><div class="leg-sq" style="background:var(--tech)"></div>Ibrahim</div>
+          <div class="leg"><div class="leg-sq" style="background:var(--edu)"></div>Bryan</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row3">
+      <div class="card">
+        <div class="card-title">Tasks Completed Per Week</div>
+        <div class="legend">
+          <div class="leg"><div class="leg-sq" style="background:var(--tech)"></div>Ibrahim</div>
+          <div class="leg"><div class="leg-sq" style="background:var(--edu)"></div>Bryan</div>
+        </div>
+        <div style="position:relative;height:170px"><canvas id="taskChart" role="img" aria-label="Tasks per week">Tasks per week.</canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Intern Summary</div>
+        <table class="tbl">
+          <thead><tr><th>Intern</th><th>Hours</th><th>Tasks</th><th>Status</th></tr></thead>
+          <tbody id="sumTbl"></tbody>
+        </table>
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">Progress vs 480hr target</div>
+          <div id="progBars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TASK REVIEW TAB -->
+<div class="tab-pane" id="pane-tasks">
+  <div class="content">
+    <div class="status status-load" id="taskStatus">
+      <div class="sdot" id="taskDot"></div>
+      <span id="taskTxt">Loading task data...</span>
+    </div>
+    <div class="task-filters">
+      <select id="filterIntern" onchange="filterTasks()">
+        <option value="all">All Interns</option>
+        <option value="Ibrahim">Ibrahim Chhapra</option>
+        <option value="Bryan">Bryan Londres</option>
+      </select>
+      <select id="filterWeek" onchange="filterTasks()">
+        <option value="all">All Weeks</option>
+      </select>
+      <input type="text" id="filterSearch" placeholder="Search tasks..." oninput="filterTasks()" style="flex:1;min-width:180px"/>
+      <span id="taskCount" style="font-size:11px;color:var(--text3);white-space:nowrap"></span>
+    </div>
+    <div class="task-wrap">
+      <table class="task-tbl">
+        <thead>
+          <tr>
+            <th style="width:110px">Intern</th>
+            <th style="width:90px">Date</th>
+            <th style="width:60px">Day</th>
+            <th style="width:55px">Hrs</th>
+            <th>Task</th>
+            <th>Notes / Links</th>
+          </tr>
+        </thead>
+        <tbody id="taskTbl"></tbody>
+      </table>
+      <div class="empty-state" id="taskEmpty" style="display:none">No tasks found. Fill in the trackers to see task data here.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DASH_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSTLcygMFnTUumR9ZErby91CFW-PbFlKWQNPeY2ukxKhax0s5Aw8Om1fTXz59vkCHBA6WaL3de454sO/pub?gid=458970490&single=true&output=csv";
+const IBRAHIM_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSTLcygMFnTUumR9ZErby91CFW-PbFlKWQNPeY2ukxKhax0s5Aw8Om1fTXz59vkCHBA6WaL3de454sO/pub?gid=197079392&single=true&output=csv";
+const BRYAN_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSTLcygMFnTUumR9ZErby91CFW-PbFlKWQNPeY2ukxKhax0s5Aw8Om1fTXz59vkCHBA6WaL3de454sO/pub?gid=347152090&single=true&output=csv";
+const TARGET=480;
+const WEEKS=['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
+let barC=null,pieC=null,taskC=null,liveData=null,allTasks=[],isLight=false;
+
+function toggleMode(){
+  isLight=!isLight;
+  document.body.classList.toggle('light',isLight);
+  document.getElementById('modeBtn').textContent=isLight?'🌙 Dark':'☀️ Light';
+  if(barC) rebuildCharts(liveData||emptyData());
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  document.getElementById('pane-'+name).classList.add('active');
+}
+
+function setStatus(id,dotId,txtId,msg,type,showTime){
+  const bar=document.getElementById(id);
+  bar.className='status status-'+(type==='live'?'live':type==='err'?'err':'load');
+  document.getElementById(txtId).textContent=msg;
+  const dot=document.getElementById(dotId);
+  dot.style.background=type==='live'?'var(--found)':type==='err'?'var(--biz)':'var(--text3)';
+  dot.style.animation=type==='live'?'pulse 2s infinite':'none';
+  if(showTime) document.getElementById('sTime').textContent='Updated: '+new Date().toLocaleTimeString();
+}
+
+function loadAll(){
+  setStatus('statusBar','sDot','sTxt','Connecting to Google Sheets...','load',false);
+  setStatus('taskStatus','taskDot','taskTxt','Loading task data...','load',false);
+  Promise.all([
+    fetchCSV(DASH_URL),
+    fetchCSV(IBRAHIM_URL),
+    fetchCSV(BRYAN_URL)
+  ]).then(([dashRows,ibrahimRows,bryanRows])=>{
+    const d=parseDash(dashRows);
+    liveData=d; renderAll(d);
+    setStatus('statusBar','sDot','sTxt','Live — connected. Auto-refreshes every 5 min.','live',true);
+    const tasks=parseTasks(ibrahimRows,'Ibrahim').concat(parseTasks(bryanRows,'Bryan'));
+    tasks.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    allTasks=tasks;
+    renderTasks(tasks);
+    setStatus('taskStatus','taskDot','taskTxt',tasks.length+' tasks loaded from both trackers.','live',false);
+    buildWeekFilter(tasks);
+    setTimeout(loadAll,5*60*1000);
+  }).catch(()=>{
+    setStatus('statusBar','sDot','sTxt','Could not reach Google Sheets.','err',false);
+    setStatus('taskStatus','taskDot','taskTxt','Could not load task data.','err',false);
+  });
+}
+
+function fetchCSV(url){
+  return new Promise((resolve,reject)=>{
+    Papa.parse(url,{
+      download:true,skipEmptyLines:true,
+      complete:r=>resolve(r.data),
+      error:reject
+    });
+  });
+}
+
+function parseDash(rows){
+  let hIdx=-1;
+  for(let i=0;i<rows.length;i++){
+    const j=rows[i].join('|').toLowerCase();
+    if(j.includes('week')&&j.includes('ibrahim hrs')){hIdx=i;break;}
+  }
+  if(hIdx<0) return emptyData();
+  const hdr=rows[hIdx].map(c=>c.toString().toLowerCase().trim());
+  const iHC=hdr.findIndex(c=>c==='ibrahim hrs');
+  const iTC=hdr.findIndex(c=>c==='ibrahim tasks');
+  const bHC=hdr.findIndex(c=>c==='bryan hrs');
+  const bTC=hdr.findIndex(c=>c==='bryan tasks');
+  if(iHC<0||bHC<0) return emptyData();
+  const iH=[],bH=[],iT=[],bT=[];
+  for(let i=hIdx+1;i<rows.length;i++){
+    const r=rows[i];
+    const lbl=(r[1]||'').toString().toLowerCase().trim();
+    if(lbl===''||lbl==='total') continue;
+    if(!lbl.includes('week')) continue;
+    iH.push(parseFloat(r[iHC])||0);
+    iT.push(parseFloat(r[iTC])||0);
+    bH.push(parseFloat(r[bHC])||0);
+    bT.push(parseFloat(r[bTC])||0);
+    if(iH.length>=12) break;
+  }
+  while(iH.length<12){iH.push(0);iT.push(0);bH.push(0);bT.push(0);}
+  return{iH,bH,iT,bT};
+}
+
+function parseTasks(rows,internName){
+  const tasks=[];
+  let hIdx=-1;
+  for(let i=0;i<rows.length;i++){
+    const j=rows[i].join('|').toLowerCase();
+    if(j.includes('day')&&j.includes('task')){hIdx=i;break;}
+  }
+  if(hIdx<0) return tasks;
+  const hdr=rows[hIdx].map(c=>c.toString().toLowerCase().trim());
+  const dayC=hdr.findIndex(c=>c==='day'||c==='b');
+  const dateC=hdr.findIndex(c=>c==='date'||c==='c');
+  const hrsC=hdr.findIndex(c=>c==='hrs'||c==='hours'||c==='d');
+  const taskC2=hdr.findIndex(c=>c.includes('task'));
+  const notesC=hdr.findIndex(c=>c.includes('note')||c.includes('link'));
+
+  for(let i=hIdx+1;i<rows.length;i++){
+    const r=rows[i];
+    const taskVal=(r[taskC2]||'').toString().trim();
+    const dateVal=(r[dateC]||'').toString().trim();
+    if(!taskVal||!dateVal) continue;
+    if(taskVal.toLowerCase().startsWith('e.g')) continue;
+    tasks.push({
+      intern:internName,
+      date:dateVal,
+      day:(r[dayC]||'').toString().trim(),
+      hrs:parseFloat(r[hrsC])||0,
+      task:taskVal,
+      notes:(r[notesC]||'').toString().trim()
+    });
+  }
+  return tasks;
+}
+
+function buildWeekFilter(tasks){
+  const weeks=new Set();
+  tasks.forEach(t=>{
+    try{
+      const d=new Date(t.date);
+      if(!isNaN(d)){
+        const diff=Math.floor((d-new Date('2026-06-09'))/(7*24*3600*1000));
+        const w=Math.min(11,Math.max(0,diff));
+        weeks.add('Week '+(w+1).toString().padStart(2,'0'));
+      }
+    }catch(e){}
+  });
+  const sel=document.getElementById('filterWeek');
+  Array.from(weeks).sort().forEach(w=>{
+    const o=document.createElement('option');
+    o.value=w; o.textContent=w; sel.appendChild(o);
+  });
+}
+
+function filterTasks(){
+  const intern=document.getElementById('filterIntern').value;
+  const week=document.getElementById('filterWeek').value;
+  const search=document.getElementById('filterSearch').value.toLowerCase();
+  let filtered=allTasks.filter(t=>{
+    if(intern!=='all'&&!t.intern.includes(intern)) return false;
+    if(search&&!t.task.toLowerCase().includes(search)&&!t.notes.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  renderTasks(filtered);
+}
+
+function renderTasks(tasks){
+  const tbody=document.getElementById('taskTbl');
+  const empty=document.getElementById('taskEmpty');
+  if(tasks.length===0){
+    tbody.innerHTML=''; empty.style.display='block';
+    document.getElementById('taskCount').textContent='0 tasks';
+    return;
+  }
+  empty.style.display='none';
+  document.getElementById('taskCount').textContent=tasks.length+' task'+(tasks.length!==1?'s':'');
+  tbody.innerHTML=tasks.map(t=>`
+    <tr>
+      <td><span class="${t.intern==='Ibrahim'?'intern-badge-i':'intern-badge-b'}">${t.intern}</span></td>
+      <td style="white-space:nowrap">${t.date}</td>
+      <td>${t.day}</td>
+      <td style="font-weight:600;color:var(--text)">${t.hrs}</td>
+      <td style="color:var(--text)">${t.task}</td>
+      <td style="font-size:11px">${t.notes?'<a href="'+t.notes+'" style="color:var(--tech);text-decoration:none" target="_blank">'+t.notes.substring(0,40)+(t.notes.length>40?'...':'')+'</a>':''}</td>
+    </tr>
+  `).join('');
+}
+
+function renderAll(d){
+  const tI=d.iH.reduce((a,b)=>a+b,0),tB=d.bH.reduce((a,b)=>a+b,0);
+  const tkI=d.iT.reduce((a,b)=>a+b,0),tkB=d.bT.reduce((a,b)=>a+b,0);
+  const pI=Math.round(tI/TARGET*100),pB=Math.round(tB/TARGET*100);
+
+  document.getElementById('k1').textContent=tI+' hrs';
+  document.getElementById('k1s').textContent=pI+'% of 480hr target';
+  document.getElementById('k1b').style.width=Math.min(100,pI)+'%';
+  document.getElementById('k2').textContent=tB+' hrs';
+  document.getElementById('k2s').textContent=pB+'% of 480hr target';
+  document.getElementById('k2b').style.width=Math.min(100,pB)+'%';
+  document.getElementById('k3').textContent=(tI+tB)+' hrs';
+  document.getElementById('k3s').textContent=(tkI+tkB)+' tasks logged';
+  document.getElementById('k3b').style.width=Math.min(100,Math.round((tI+tB)/(TARGET*2)*100))+'%';
+
+  document.getElementById('sumTbl').innerHTML=[
+    {name:'Ibrahim Chhapra',hrs:tI,tasks:tkI,cls:'intern-badge-i'},
+    {name:'Bryan Londres',hrs:tB,tasks:tkB,cls:'intern-badge-b'}
+  ].map(r=>`<tr>
+    <td style="font-weight:600;color:var(--text)"><span class="${r.cls}">${r.name.split(' ')[0]}</span> ${r.name.split(' ')[1]}</td>
+    <td>${r.hrs}</td><td>${r.tasks}</td>
+    <td><span class="pill-active">Active</span></td>
+  </tr>`).join('');
+
+  document.getElementById('progBars').innerHTML=
+    `<div class="pbar-lbl"><span>Ibrahim Chhapra</span><span>${pI}% (${tI}/${TARGET} hrs)</span></div>
+     <div class="pbar-track"><div class="pbar-fill" style="background:var(--tech);width:${Math.min(100,pI)}%"></div></div>
+     <div class="pbar-lbl"><span>Bryan Londres</span><span>${pB}% (${tB}/${TARGET} hrs)</span></div>
+     <div class="pbar-track"><div class="pbar-fill" style="background:var(--edu);width:${Math.min(100,pB)}%"></div></div>`;
+
+  rebuildCharts(d);
+}
+
+function rebuildCharts(d){
+  const gridColor=isLight?'#e8e8f0':'#1a1a2e';
+  const tickColor=isLight?'#9090AA':'#555577';
+  const cO={responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false}},
+    scales:{x:{ticks:{color:tickColor,font:{size:9}},grid:{color:gridColor},border:{color:gridColor}},
+            y:{ticks:{color:tickColor,font:{size:9}},grid:{color:gridColor},border:{color:gridColor}}}};
+  if(barC) barC.destroy();
+  barC=new Chart(document.getElementById('barChart'),{type:'bar',data:{labels:WEEKS,datasets:[
+    {label:'Ibrahim',data:d.iH,backgroundColor:'#1502FF',borderRadius:3,barPercentage:0.75},
+    {label:'Bryan',data:d.bH,backgroundColor:'#7776BC',borderRadius:3,barPercentage:0.75}
+  ]},options:cO});
+  const tI=d.iH.reduce((a,b)=>a+b,0),tB=d.bH.reduce((a,b)=>a+b,0);
+  const safe=tI+tB>0;
+  if(pieC) pieC.destroy();
+  pieC=new Chart(document.getElementById('pieChart'),{type:'doughnut',data:{
+    labels:['Ibrahim','Bryan'],datasets:[{data:safe?[tI,tB]:[1,1],
+    backgroundColor:['#1502FF','#7776BC'],
+    borderColor:[isLight?'#F4F4F8':'#0A0A0F',isLight?'#F4F4F8':'#0A0A0F'],
+    borderWidth:3,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>safe?`${ctx.label}: ${ctx.parsed} hrs (${Math.round(ctx.parsed/(tI+tB)*100)}%)`:`${ctx.label}: no data yet`}}}}});
+  if(taskC) taskC.destroy();
+  taskC=new Chart(document.getElementById('taskChart'),{type:'bar',data:{labels:WEEKS,datasets:[
+    {label:'Ibrahim',data:d.iT,backgroundColor:'#1502FF',borderRadius:3,barPercentage:0.75},
+    {label:'Bryan',data:d.bT,backgroundColor:'#7776BC',borderRadius:3,barPercentage:0.75}
+  ]},options:cO});
+}
+
+function emptyData(){
+  return{iH:new Array(12).fill(0),bH:new Array(12).fill(0),
+         iT:new Array(12).fill(0),bT:new Array(12).fill(0)};
+}
+
+function exportCSV(){
+  const d=liveData||emptyData();
+  const rows=[['Week','Ibrahim Hours','Bryan Hours','Ibrahim Tasks','Bryan Tasks','Combined Hours']];
+  for(let i=0;i<12;i++) rows.push(['Week '+(i+1),d.iH[i],d.bH[i],d.iT[i],d.bT[i],d.iH[i]+d.bH[i]]);
+  if(allTasks.length>0){
+    rows.push([]);
+    rows.push(['Intern','Date','Day','Hours','Task','Notes']);
+    allTasks.forEach(t=>rows.push([t.intern,t.date,t.day,t.hrs,t.task,t.notes]));
+  }
+  const a=document.createElement('a');
+  a.href='data:text/csv,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.download='Archangel_Summer2026_Export.csv'; a.click();
+}
+
+loadAll();
+</script>
+
+<style media="print">
+body{background:#fff;color:#000}
+.hdr{background:#fff;border-bottom:3px solid #1502FF}
+.hdr-eyebrow{color:#7776BC}.hdr-title{color:#000}
+.stripe{background:#1502FF;color:#fff}
+.tabs,.status,.hdr-right{display:none!important}
+.kpi,.card{background:#f5f5f5;border:1px solid #ddd}
+.kpi-val,.hdr-title{color:#000}
+#pane-overview{display:block!important}
+#pane-tasks{display:none!important}
+</style>
+</body>
+</html>
