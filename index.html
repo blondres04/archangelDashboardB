@@ -340,7 +340,10 @@ textarea.form-input{resize:vertical;min-height:70px}
       </div>
     </div>
     <!-- LOG TABLE -->
-    <div class="card-title" style="margin-bottom:10px">Recent Entries</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="card-title" style="margin-bottom:0">Recent Entries</div>
+      <button class="btn btn-ghost" onclick="loadLogs()" style="font-size:10px;padding:5px 12px">↻ Refresh</button>
+    </div>
     <div class="log-wrap">
       <table class="log-tbl">
         <thead>
@@ -698,7 +701,7 @@ function submitLog(){
     document.getElementById('logSignedIn').value='';
     document.getElementById('logTask').value='';
     document.getElementById('logNotes').value='';
-    setTimeout(loadLogs,2000);
+    setTimeout(loadLogs,10000);
   }).catch(()=>{
     showMsg('Submission failed. Check your connection.','err');
     btn.disabled=false; btn.textContent='Submit Entry';
