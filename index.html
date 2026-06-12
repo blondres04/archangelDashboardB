@@ -112,6 +112,38 @@ body{background:var(--bg);color:var(--text);font-family:Arial,sans-serif;min-hei
 .intern-badge-b{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;font-weight:700;background:#7776BC20;color:var(--edu);border:1px solid #7776BC30}
 .task-wrap{max-height:520px;overflow-y:auto;border-radius:10px;border:1px solid var(--border)}
 .empty-state{text-align:center;padding:48px 24px;color:var(--text3);font-size:13px}
+
+/* DAILY LOG */
+.log-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+@media(max-width:800px){.log-grid{grid-template-columns:1fr}}
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.form-title{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px}
+.form-row{margin-bottom:12px}
+.form-lbl{font-size:10px;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:5px;display:block}
+.form-input{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:12px;outline:none}
+.form-input:focus{border-color:var(--tech)}
+.form-input::placeholder{color:var(--text3)}
+textarea.form-input{resize:vertical;min-height:70px}
+.form-select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:6px;font-size:12px;outline:none;cursor:pointer}
+.btn-submit{width:100%;padding:10px;background:var(--tech);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:0.5px;text-transform:uppercase;cursor:pointer;margin-top:4px}
+.btn-submit:hover{opacity:0.85}
+.btn-submit:disabled{opacity:0.4;cursor:not-allowed}
+.form-msg{font-size:11px;margin-top:10px;padding:8px 12px;border-radius:6px;display:none}
+.form-msg-ok{background:#00A86B12;border:1px solid #00A86B30;color:var(--found)}
+.form-msg-err{background:#EF4B1912;border:1px solid #EF4B1930;color:var(--biz)}
+.today-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px}
+.today-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--row)}
+.today-row:last-child{border-bottom:none}
+.today-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.today-name{font-size:13px;font-weight:600;color:var(--text);margin-left:10px}
+.today-time{font-size:12px;color:var(--found);font-weight:600}
+.today-missing{font-size:11px;color:var(--text3)}
+.log-wrap{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.log-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.log-tbl th{color:var(--text3);font-size:9px;letter-spacing:1px;text-transform:uppercase;padding:10px 14px;border-bottom:1px solid var(--border);text-align:left;font-weight:600;background:var(--surface)}
+.log-tbl td{padding:10px 14px;border-bottom:1px solid var(--row);color:var(--text2);vertical-align:top}
+.log-tbl tr:last-child td{border-bottom:none}
+.log-tbl tr:hover td{background:var(--row)}
 </style>
 </head>
 <body>
@@ -140,6 +172,7 @@ body{background:var(--bg);color:var(--text);font-family:Arial,sans-serif;min-hei
 <div class="tabs">
   <div class="tab active" onclick="switchTab('overview')">Overview</div>
   <div class="tab" onclick="switchTab('tasks')">Task Review</div>
+  <div class="tab" onclick="switchTab('log')">Daily Log</div>
 </div>
 
 <!-- OVERVIEW TAB -->
@@ -252,13 +285,91 @@ body{background:var(--bg);color:var(--text);font-family:Arial,sans-serif;min-hei
   </div>
 </div>
 
+<!-- DAILY LOG TAB -->
+<div class="tab-pane" id="pane-log">
+  <div class="content">
+    <div class="log-grid">
+      <!-- ENTRY FORM -->
+      <div class="form-card">
+        <div class="form-title">Log Today's Entry</div>
+        <div class="form-row">
+          <label class="form-lbl">Intern</label>
+          <select class="form-select" id="logIntern">
+            <option value="bryan">Bryan Londres</option>
+            <option value="ibrahim">Ibrahim Chhapra</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label class="form-lbl">Day</label>
+          <input class="form-input" id="logDay" type="text" placeholder="e.g. Friday" />
+        </div>
+        <div class="form-row">
+          <label class="form-lbl">Signed In</label>
+          <input class="form-input" id="logSignedIn" type="text" placeholder="e.g. 9:05 AM" />
+        </div>
+        <div class="form-row">
+          <label class="form-lbl">Task</label>
+          <textarea class="form-input" id="logTask" placeholder="What did you work on today?"></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-lbl">Notes / Links</label>
+          <input class="form-input" id="logNotes" type="text" placeholder="Optional" />
+        </div>
+        <button class="btn-submit" id="logSubmit" onclick="submitLog()">Submit Entry</button>
+        <div class="form-msg" id="logMsg"></div>
+      </div>
+      <!-- TODAY STATUS -->
+      <div class="today-card">
+        <div class="form-title">Today's Sign-Ins</div>
+        <div id="todayStatus">
+          <div class="today-row">
+            <div style="display:flex;align-items:center">
+              <div class="today-dot" style="background:var(--text3)"></div>
+              <span class="today-name">Bryan Londres</span>
+            </div>
+            <span class="today-missing">No entry yet</span>
+          </div>
+          <div class="today-row">
+            <div style="display:flex;align-items:center">
+              <div class="today-dot" style="background:var(--text3)"></div>
+              <span class="today-name">Ibrahim Chhapra</span>
+            </div>
+            <span class="today-missing">No entry yet</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- LOG TABLE -->
+    <div class="card-title" style="margin-bottom:10px">Recent Entries</div>
+    <div class="log-wrap">
+      <table class="log-tbl">
+        <thead>
+          <tr>
+            <th style="width:120px">Intern</th>
+            <th style="width:90px">Day</th>
+            <th style="width:90px">Signed In</th>
+            <th>Task</th>
+            <th>Notes / Links</th>
+          </tr>
+        </thead>
+        <tbody id="logTbl"></tbody>
+      </table>
+      <div class="empty-state" id="logEmpty">No entries yet. Submit your first log above.</div>
+    </div>
+  </div>
+</div>
+
 <script>
 const DASH_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSTLcygMFnTUumR9ZErby91CFW-PbFlKWQNPeY2ukxKhax0s5Aw8Om1fTXz59vkCHBA6WaL3de454sO/pub?gid=458970490&single=true&output=csv";
 const IBRAHIM_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSTLcygMFnTUumR9ZErby91CFW-PbFlKWQNPeY2ukxKhax0s5Aw8Om1fTXz59vkCHBA6WaL3de454sO/pub?gid=197079392&single=true&output=csv";
 const BRYAN_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vSTLcygMFnTUumR9ZErby91CFW-PbFlKWQNPeY2ukxKhax0s5Aw8Om1fTXz59vkCHBA6WaL3de454sO/pub?gid=347152090&single=true&output=csv";
 const TARGET=480;
 const WEEKS=['W1','W2','W3','W4','W5','W6','W7','W8','W9','W10','W11','W12'];
-let barC=null,pieC=null,taskC=null,liveData=null,allTasks=[],isLight=false;
+const BRYAN_LOG_CSV="https://docs.google.com/spreadsheets/d/13d9LOQDzcckQmoCCtzahvE4A_Rc3_msanliqhfksOCs/pub?gid=0&single=true&output=csv";
+const IBRAHIM_LOG_CSV="https://docs.google.com/spreadsheets/d/1l_GBgcA5N2SetGKrmITlq0lGTU6lLeWvJUw0Riye4Vw/pub?gid=0&single=true&output=csv";
+const BRYAN_SCRIPT="https://script.google.com/macros/s/AKfycbxKqvDzbpkmyMhCkVCodmZeXQJG0pPFQu6jFAJLVRs8dpoMi5iWGniXUw6m8VWIv783/exec";
+const IBRAHIM_SCRIPT="https://script.google.com/macros/s/AKfycbzWWbPV-YLOL-e_AklO46TVI7nQGgmqIeA32_HX-l_R6hVm_vkj_UBGRWHo566BZrUa/exec";
+let barC=null,pieC=null,taskC=null,liveData=null,allTasks=[],allLogs=[],isLight=false;
 
 function toggleMode(){
   isLight=!isLight;
@@ -272,6 +383,10 @@ function switchTab(name){
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
   document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
   document.getElementById('pane-'+name).classList.add('active');
+  if(name==='log'){
+    const dayInput=document.getElementById('logDay');
+    if(!dayInput.value) dayInput.value=new Date().toLocaleDateString('en-US',{weekday:'long'});
+  }
 }
 
 function setStatus(id,dotId,txtId,msg,type,showTime){
@@ -496,6 +611,108 @@ function rebuildCharts(d){
   ]},options:cO});
 }
 
+function parseLogs(rows, internName){
+  const logs=[];
+  if(rows.length<2) return logs;
+  const hdr=rows[0].map(c=>c.toString().toLowerCase().trim());
+  const signC=hdr.findIndex(c=>c.includes('sign'));
+  const dayC=hdr.findIndex(c=>c==='day');
+  const taskC2=hdr.findIndex(c=>c.includes('task'));
+  const notesC=hdr.findIndex(c=>c.includes('note')||c.includes('link'));
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    const dayVal=(r[dayC]||'').toString().trim();
+    const taskVal=(r[taskC2]||'').toString().trim();
+    if(!dayVal&&!taskVal) continue;
+    logs.push({
+      intern:internName,
+      day:dayVal,
+      signedIn:signC>=0?(r[signC]||'').toString().trim():'',
+      task:taskVal,
+      notes:notesC>=0?(r[notesC]||'').toString().trim():''
+    });
+  }
+  return logs;
+}
+
+function renderLogs(logs){
+  const tbody=document.getElementById('logTbl');
+  const empty=document.getElementById('logEmpty');
+  if(logs.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=logs.map(l=>`
+    <tr>
+      <td><span class="${l.intern==='Bryan'?'intern-badge-b':'intern-badge-i'}">${l.intern}</span></td>
+      <td>${l.day}</td>
+      <td style="color:var(--found);font-weight:600">${l.signedIn||'—'}</td>
+      <td style="color:var(--text)">${l.task}</td>
+      <td style="font-size:11px">${l.notes?'<a href="'+l.notes+'" style="color:var(--tech);text-decoration:none" target="_blank">'+l.notes.substring(0,40)+(l.notes.length>40?'...':'')+'</a>':''}</td>
+    </tr>
+  `).join('');
+}
+
+function updateTodayStatus(logs){
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long'});
+  const bryanToday=logs.filter(l=>l.intern==='Bryan'&&l.day.toLowerCase()===today.toLowerCase());
+  const ibrahimToday=logs.filter(l=>l.intern==='Ibrahim'&&l.day.toLowerCase()===today.toLowerCase());
+  document.getElementById('todayStatus').innerHTML=[
+    {name:'Bryan Londres',cls:'intern-badge-b',dotColor:'var(--edu)',entries:bryanToday},
+    {name:'Ibrahim Chhapra',cls:'intern-badge-i',dotColor:'var(--tech)',entries:ibrahimToday}
+  ].map(({name,dotColor,entries})=>`
+    <div class="today-row">
+      <div style="display:flex;align-items:center">
+        <div class="today-dot" style="background:${entries.length?'var(--found)':dotColor};${entries.length?'animation:pulse 2s infinite':''}"></div>
+        <span class="today-name">${name}</span>
+      </div>
+      ${entries.length
+        ?`<span class="today-time">${entries[0].signedIn||'Logged'}</span>`
+        :`<span class="today-missing">No entry yet</span>`}
+    </div>
+  `).join('');
+}
+
+function loadLogs(){
+  Promise.all([fetchCSV(BRYAN_LOG_CSV),fetchCSV(IBRAHIM_LOG_CSV)]).then(([bRows,iRows])=>{
+    const logs=[...parseLogs(bRows,'Bryan'),...parseLogs(iRows,'Ibrahim')];
+    allLogs=logs;
+    renderLogs(logs);
+    updateTodayStatus(logs);
+  }).catch(()=>{});
+}
+
+function submitLog(){
+  const intern=document.getElementById('logIntern').value;
+  const day=document.getElementById('logDay').value.trim();
+  const signedIn=document.getElementById('logSignedIn').value.trim();
+  const task=document.getElementById('logTask').value.trim();
+  const notes=document.getElementById('logNotes').value.trim();
+  if(!day||!signedIn||!task){showMsg('Please fill in Day, Signed In, and Task.','err');return;}
+  const url=(intern==='bryan'?BRYAN_SCRIPT:IBRAHIM_SCRIPT)
+    +`?signedIn=${encodeURIComponent(signedIn)}&day=${encodeURIComponent(day)}&task=${encodeURIComponent(task)}&notes=${encodeURIComponent(notes)}`;
+  const btn=document.getElementById('logSubmit');
+  btn.disabled=true; btn.textContent='Submitting...';
+  fetch(url,{mode:'no-cors'}).then(()=>{
+    showMsg('Entry submitted!','ok');
+    btn.disabled=false; btn.textContent='Submit Entry';
+    document.getElementById('logDay').value='';
+    document.getElementById('logSignedIn').value='';
+    document.getElementById('logTask').value='';
+    document.getElementById('logNotes').value='';
+    setTimeout(loadLogs,2000);
+  }).catch(()=>{
+    showMsg('Submission failed. Check your connection.','err');
+    btn.disabled=false; btn.textContent='Submit Entry';
+  });
+}
+
+function showMsg(msg,type){
+  const el=document.getElementById('logMsg');
+  el.textContent=msg;
+  el.className='form-msg form-msg-'+(type==='ok'?'ok':'err');
+  el.style.display='block';
+  setTimeout(()=>{el.style.display='none';},4000);
+}
+
 function emptyData(){
   return{iH:new Array(12).fill(0),bH:new Array(12).fill(0),
          iT:new Array(12).fill(0),bT:new Array(12).fill(0)};
@@ -516,6 +733,7 @@ function exportCSV(){
 }
 
 loadAll();
+loadLogs();
 </script>
 
 <style media="print">
