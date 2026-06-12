@@ -616,13 +616,18 @@ function rebuildCharts(d){
 
 function parseLogs(rows, internName){
   const logs=[];
-  if(rows.length<2) return logs;
-  const hdr=rows[0].map(c=>c.toString().toLowerCase().trim());
+  let hIdx=-1;
+  for(let i=0;i<rows.length;i++){
+    const j=rows[i].join('|').toLowerCase();
+    if(j.includes('day')&&j.includes('task')){hIdx=i;break;}
+  }
+  if(hIdx<0) return logs;
+  const hdr=rows[hIdx].map(c=>c.toString().toLowerCase().trim());
   const signC=hdr.findIndex(c=>c.includes('sign'));
   const dayC=hdr.findIndex(c=>c==='day');
   const taskC2=hdr.findIndex(c=>c.includes('task'));
   const notesC=hdr.findIndex(c=>c.includes('note')||c.includes('link'));
-  for(let i=1;i<rows.length;i++){
+  for(let i=hIdx+1;i<rows.length;i++){
     const r=rows[i];
     const dayVal=(r[dayC]||'').toString().trim();
     const taskVal=(r[taskC2]||'').toString().trim();
