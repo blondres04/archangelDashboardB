@@ -240,6 +240,7 @@ body{background:var(--bg);color:var(--text);font-family:Arial,sans-serif;min-hei
             <th style="width:110px">Intern</th>
             <th style="width:90px">Date</th>
             <th style="width:60px">Day</th>
+            <th style="width:75px">Sign In</th>
             <th style="width:55px">Hrs</th>
             <th>Task</th>
             <th>Notes / Links</th>
@@ -358,6 +359,7 @@ function parseTasks(rows,internName){
   const hdr=rows[hIdx].map(c=>c.toString().toLowerCase().trim());
   const dayC=hdr.findIndex(c=>c==='day'||c==='b');
   const dateC=hdr.findIndex(c=>c==='date'||c==='c');
+  const signInC=hdr.findIndex(c=>c.includes('sign'));
   const hrsC=hdr.findIndex(c=>c==='hrs'||c==='hours'||c==='d');
   const taskC2=hdr.findIndex(c=>c.includes('task'));
   const notesC=hdr.findIndex(c=>c.includes('note')||c.includes('link'));
@@ -372,6 +374,7 @@ function parseTasks(rows,internName){
       intern:internName,
       date:dateVal,
       day:(r[dayC]||'').toString().trim(),
+      signIn:signInC>=0?(r[signInC]||'').toString().trim():'',
       hrs:parseFloat(r[hrsC])||0,
       task:taskVal,
       notes:(r[notesC]||'').toString().trim()
@@ -426,6 +429,7 @@ function renderTasks(tasks){
       <td><span class="${t.intern==='Ibrahim'?'intern-badge-i':'intern-badge-b'}">${t.intern}</span></td>
       <td style="white-space:nowrap">${t.date}</td>
       <td>${t.day}</td>
+      <td style="white-space:nowrap;color:var(--found);font-weight:600">${t.signIn||'—'}</td>
       <td style="font-weight:600;color:var(--text)">${t.hrs}</td>
       <td style="color:var(--text)">${t.task}</td>
       <td style="font-size:11px">${t.notes?'<a href="'+t.notes+'" style="color:var(--tech);text-decoration:none" target="_blank">'+t.notes.substring(0,40)+(t.notes.length>40?'...':'')+'</a>':''}</td>
@@ -507,8 +511,8 @@ function exportCSV(){
   for(let i=0;i<12;i++) rows.push(['Week '+(i+1),d.iH[i],d.bH[i],d.iT[i],d.bT[i],d.iH[i]+d.bH[i]]);
   if(allTasks.length>0){
     rows.push([]);
-    rows.push(['Intern','Date','Day','Hours','Task','Notes']);
-    allTasks.forEach(t=>rows.push([t.intern,t.date,t.day,t.hrs,t.task,t.notes]));
+    rows.push(['Intern','Date','Day','Sign In','Hours','Task','Notes']);
+    allTasks.forEach(t=>rows.push([t.intern,t.date,t.day,t.signIn,t.hrs,t.task,t.notes]));
   }
   const a=document.createElement('a');
   a.href='data:text/csv,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
